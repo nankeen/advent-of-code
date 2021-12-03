@@ -26,13 +26,13 @@ let seat_idx ({ cols; rows } : index) : int * int =
 let seat_id (idx : index) : int =
   let row_idx, col_idx = seat_idx idx in
   (row_idx * 8) + col_idx
-  
 
 let part_1 indexes =
-  let open Sequence in
+  let open List in
   let seat_ids = map indexes ~f:seat_id in
-  let x = Option.value_exn (hd seat_ids) in
-  fold seat_ids ~init:x ~f:max
+  match seat_ids with
+  | x :: xs -> fold xs ~init:x ~f:max
+  | [] -> failwith "No seat ids provided in part 1"
 
 let part_2 indexes =
   let open List in
@@ -43,7 +43,7 @@ let part_2 indexes =
   let seat_ids = map indexes ~f:seat_id |> sort ~compare:Poly.compare in
   match seat_ids with
   | x :: xs -> fold_until xs ~finish:ident ~init:x ~f:find_gap
-  | [] -> failwith "No seat ids provided"
+  | [] -> failwith "No seat ids provided in part 2"
 
 let parse_line (line : string) : index =
   let parse_row = function
@@ -66,7 +66,7 @@ let () =
   let lines = List.map (In_channel.read_lines input_path) ~f:parse_line in
 
   (* Compute part 1 *)
-  let part_1_result = part_1 @@ Sequence.of_list lines in
+  let part_1_result = part_1 lines in
   printf "Part 1: %d\n" part_1_result;
 
   (* Compute part 2 *)
