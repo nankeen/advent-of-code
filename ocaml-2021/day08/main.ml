@@ -15,7 +15,7 @@ let part_1 =
 (* This part is a monstrosity I know, and I hate myself for writing this *)
 let part_2 lines =
   let sort s =
-    String.to_list s |> List.sort ~compare:Poly.compare |> String.of_char_list
+    String.to_list s |> List.sort ~compare:Char.compare |> String.of_char_list
   in
   let map_signals digits =
     let has_count count s = String.length s = count in
@@ -31,49 +31,36 @@ let part_2 lines =
             | _ -> (one, four, seven, eight))
           signals
       in
-      ( Option.value_exn one,
-        Option.value_exn four,
-        Option.value_exn seven,
-        Option.value_exn eight )
+      Option.(value_exn one, value_exn four, value_exn seven, value_exn eight)
     in
     let has_segments segments signal =
       String.for_all ~f:(String.contains signal) segments
     in
     let one, four, seven, eight = find_unique_lengths digits in
-    let nine =
-      List.find_exn
-        ~f:(fun s -> has_count 6 s && has_segments (one ^ four) s)
-        digits
-    in
-    let six =
-      List.find_exn
-        ~f:(fun s -> has_count 6 s && not (has_segments one s))
-        digits
-    in
-    let zero =
-      List.find_exn
-        ~f:(fun s ->
-          has_count 6 s && (not (has_segments four s)) && has_segments one s)
-        digits
-    in
-    let three =
-      List.find_exn ~f:(fun s -> has_count 5 s && has_segments one s) digits
-    in
     let four_diff_one =
       String.filter ~f:(fun s -> not @@ String.contains one s) four
     in
-    let two =
-      List.find_exn
-        ~f:(fun s ->
-          has_count 5 s
-          && (not (has_segments four_diff_one s))
-          && not (has_segments one s))
-        digits
-    in
-    let five =
-      List.find_exn
-        ~f:(fun s -> has_count 5 s && has_segments four_diff_one s)
-        digits
+    let zero, two, three, five, six, nine =
+      ( List.find_exn
+          ~f:(fun s ->
+            has_count 6 s && (not (has_segments four s)) && has_segments one s)
+          digits,
+        List.find_exn
+          ~f:(fun s ->
+            has_count 5 s
+            && (not (has_segments four_diff_one s))
+            && not (has_segments one s))
+          digits,
+        List.find_exn ~f:(fun s -> has_count 5 s && has_segments one s) digits,
+        List.find_exn
+          ~f:(fun s -> has_count 5 s && has_segments four_diff_one s)
+          digits,
+        List.find_exn
+          ~f:(fun s -> has_count 6 s && not (has_segments one s))
+          digits,
+        List.find_exn
+          ~f:(fun s -> has_count 6 s && has_segments (one ^ four) s)
+          digits )
     in
     List.map
       ~f:(fun (k, v) -> (sort k, v))
