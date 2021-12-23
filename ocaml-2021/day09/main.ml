@@ -55,6 +55,10 @@ let part_1 seafloor =
            let height = get_exn seafloor pos in
            acc + if is_lowpoint pos height then height + 1 else 0))
 
+(* 
+ Point module that implements Comparator.S so that
+ tuples of integers can be used with Sets
+*)
 module Point = struct
   module T = struct
     type t = int * int [@@deriving sexp_of, compare]
@@ -67,10 +71,20 @@ end
 let flood_fill seafloor pos =
   let open Sequence in
   let open Seafloor in
+  (* Create queue and visited set *)
   let q = Queue.create () in
   let visited = ref @@ Set.empty (module Point) in
+
+  (* Mark root as visited and put on queue *)
   visited := Set.add !visited pos;
   Queue.enqueue q pos;
+
+  (*
+    1. Dequeue frontier
+    2. Get eligible neighbours
+    3. Mark eligible as visited
+    4. Enqueue eligible neighbours
+  *)
   while not @@ Queue.is_empty q do
     let pos = Queue.dequeue_exn q in
     let height = get_exn seafloor pos in
@@ -94,6 +108,7 @@ let flood_fill seafloor pos =
 let part_2 seafloor =
   let open Sequence in
   let open Seafloor in
+  (* 1. Compute all the low points on the seafloor *)
   let is_lowpoint pos =
     let height = get_exn seafloor pos in
     adjacent seafloor pos |> for_all ~f:(Fn.flip ( > ) height)
@@ -101,12 +116,15 @@ let part_2 seafloor =
 
   let low_points = iteri seafloor |> filter ~f:is_lowpoint in
 
+  (* 2. Find basins by floodfill from low point *)
   let basins =
     map low_points ~f:(fun p -> flood_fill seafloor p |> Set.length)
     |> filter ~f:(( < ) 0)
     |> to_array
   in
-  Array.sort basins ~compare:(fun a b -> -Int.compare a b);
+
+  (* 3. Take top 3 basin by size *)
+  Array.sort basins ~compare:(fun a b -> Int.compare b a);
   take (basins |> Array.to_sequence) 3 |> fold ~init:1 ~f:( * )
 
 let parse_line line = String.to_array line |> Array.map ~f:Char.get_digit_exn
