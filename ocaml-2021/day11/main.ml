@@ -2,8 +2,6 @@ open Core
 
 let input_path = (Sys.get_argv ()).(1)
 
-type point = int * int [@@deriving show]
-
 module Grid = struct
   type t = int array array [@@deriving show]
 
@@ -11,7 +9,7 @@ module Grid = struct
     let n, m = Array.(length board, length board.(0)) in
     x < m && x >= 0 && y >= 0 && y < n
 
-  let get_neighbourhood_idxs board ((x, y) : point) : point list =
+  let get_neighbourhood_idxs board (x, y) =
     [
       (x + 1, y + 1);
       (x + 1, y - 1);
