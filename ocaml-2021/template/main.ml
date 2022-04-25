@@ -13,8 +13,8 @@ let () =
 
   (* Compute part 1 *)
   let part_1_result = part_1 input in
-  Stdio.printf "Part 1 %s\n" part_1_result;
+  printf "Part 1 %s\n" part_1_result;
 
   (* Compute part 2 *)
   let part_2_result = part_2 input in
-  Stdio.printf "Part 2 %s\n" part_2_result
+  printf "Part 2 %s\n" part_2_result
