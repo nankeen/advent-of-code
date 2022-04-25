@@ -3,14 +3,14 @@ open Core
 let input_path = (Sys.get_argv ()).(1)
 
 type parse_result = Point of int * int | FoldX of int | FoldY of int
-[@@deriving show]
 
+(* Create a new set type *)
 module Point_set = Set.Make (struct
   type t = int * int [@@deriving compare, sexp_of]
-
   let t_of_sexp = opaque_of_sexp
 end)
 
+(* Parsing functions *)
 let integer =
   let open Opal in
   many1 digit => implode % int_of_string
@@ -30,6 +30,7 @@ let parse_fold =
 
   token "fold" >> space >> token "along" >> space >> (fold_x <|> fold_y)
 
+(* Utility function to reflect a point *)
 let reflect f (x, y) =
   match f with
   | FoldY i -> Some (if y < i then (x, y) else (x, i - abs (i - y)))
@@ -37,6 +38,7 @@ let reflect f (x, y) =
   | _ -> None
 
 let part_1 points folds =
+  (* Perform a single fold *)
   let fold = List.hd_exn folds in
   Point_set.of_list points
   |> Point_set.filter_map ~f:(reflect fold)
@@ -44,12 +46,16 @@ let part_1 points folds =
 
 let part_2 points folds =
   let point_set = Point_set.of_list points in
+
+  (* Perform the folds *)
   let result =
     List.fold ~init:point_set
       ~f:(fun points fold -> Point_set.filter_map ~f:(reflect fold) points)
       folds
     |> Point_set.to_list
   in
+
+  (* Create a 2D matrix and mark the points *)
   let render points =
     let max_x =
       List.map result ~f:(fun (x, _) -> x)
@@ -58,13 +64,15 @@ let part_2 points folds =
     and max_y =
       List.map result ~f:(fun (_, y) -> y)
       |> List.max_elt ~compare:Poly.compare
-      |> Option.value_exn 
+      |> Option.value_exn
     in
     let screen = Array.make_matrix ~dimx:(max_y + 1) ~dimy:(max_x + 1) '.' in
     List.iter ~f:(fun (x, y) -> screen.(y).(x) <- '#') points;
     Array.map ~f:(fun line -> Array.to_list line |> String.of_char_list) screen
     |> String.concat_array ~sep:"\n"
   in
+
+  (* Render the result as a string *)
   render result
 
 let parse_line line =
