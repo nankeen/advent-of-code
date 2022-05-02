@@ -24,7 +24,7 @@ let count_crossing lines =
       let points = line_points line in
       List.iter points ~f:(fun (x, y) ->
           lin_space.(x).(y) <- lin_space.(x).(y) + 1));
-  Array.map ~f:(Array.count ~f:(fun x -> x > 1)) lin_space |> Array.sum (module Int) ~f:ident
+  Array.map ~f:(Array.count ~f:(fun x -> x > 1)) lin_space |> Array.sum (module Int) ~f:Fn.id
 
 let part_1 lines =
   List.filter ~f:(fun ((x1, y1), (x2, y2)) -> x1 = x2 || y1 = y2) lines
