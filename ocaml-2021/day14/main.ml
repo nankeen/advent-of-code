@@ -1,11 +1,11 @@
 open Core
 
-module Hashtbl_rule = Hashtbl.Make (struct
+module Hashtbl_pair = Hashtbl.Make (struct
   type t = char * char [@@deriving of_sexp, sexp_of, compare, hash]
 end)
 
 module Polymer = struct
-  type t = string
+  type t = (char * char, int) Hashtbl.t
   type rule = (char * char) * char
 
   let ( let* ) = Opal.( >>= )
@@ -18,44 +18,56 @@ module Polymer = struct
     let* produces = space >> token "->" << space >> upper << newline in
     return ((left1, left2), produces)
 
+  let touch_n t s n =
+    let count = match Hashtbl_pair.find t s with Some x -> x | None -> 0 in
+    Hashtbl_pair.set t ~key:s ~data:(count + n)
+
+  let count_pairs polymer_str =
+    let counter = Hashtbl_pair.create ()
+    and s1 = Sequence.of_list polymer_str
+    and s2 = Sequence.of_list (List.tl_exn polymer_str) in
+    Sequence.(zip s1 s2 |> iter ~f:(fun pair -> touch_n counter pair 1));
+    counter
+
   let parse_problem =
     let open Opal in
     let* polymer_template = many1 upper in
     let* _ = many newline in
     let* rules = many parse_rule in
-    return (polymer_template, Hashtbl_rule.of_alist_exn rules)
+    return (count_pairs polymer_template, Hashtbl_pair.of_alist_exn rules)
 
-  let pair_insertion rules polymer =
-    let pairs =
-      List.zip_exn (List.drop_last_exn polymer) (List.drop polymer 1)
-    in
-    List.fold pairs
-      ~init:[ List.hd_exn polymer ]
-      ~f:(fun p (a, b) ->
-        let product_option = Hashtbl_rule.find rules (a, b) in
+  let pair_insertion rules old_counter =
+    let new_counter = Hashtbl_pair.create () in
+    Hashtbl_pair.iteri old_counter ~f:(fun ~key:(a, b) ~data ->
+        let product_option = Hashtbl_pair.find rules (a, b) in
         match product_option with
-        | Some product -> b :: product :: p
-        | None -> b :: p)
-    |> List.rev
+        | Some product ->
+            touch_n new_counter (a, product) data;
+            touch_n new_counter (product, b) data
+        | None -> touch_n new_counter (a, b) data);
+    new_counter
 end
 
-let count_polymer elems =
-  let add_count counter x =
-    let count_opt = Hashtbl.find counter x in
-    match count_opt with
-    | Some count -> Hashtbl.set counter ~key:x ~data:(succ count)
-    | None -> Hashtbl.set counter ~key:x ~data:0
-  in
+let count_polymer polymer =
   let counter = Hashtbl.create (module Char) in
-  List.iter elems ~f:(add_count counter);
-  counter
+  let touch_counter elem n =
+    let count =
+      match Hashtbl.find counter elem with Some i -> i | None -> 0
+    in
+    Hashtbl.set counter ~key:elem ~data:(count + n)
+  in
+  Hashtbl_pair.iteri polymer ~f:(fun ~key:(a, b) ~data ->
+      touch_counter a data;
+      touch_counter b data);
+  (* Divide each entry by 2 *)
+  Hashtbl.map counter ~f:(fun count -> count / 2 + count % 2)
 
 let input_path = (Sys.get_argv ()).(1)
 
-let part_1 polymer rules =
+let part_1 counter rules =
   let polymer_count =
-    List.fold ~init:polymer
-      ~f:(fun polymer _ -> Polymer.pair_insertion rules polymer)
+    List.fold ~init:counter
+      ~f:(fun counter _ -> Polymer.pair_insertion rules counter)
       (List.range 0 10)
     |> count_polymer |> Hashtbl.to_alist
   in
@@ -87,7 +99,7 @@ let part_2 polymer rules =
   max_c - min_c
 
 let () =
-  let polymer_template, rules =
+  let pair_counter, rules =
     In_channel.create input_path
     |> Opal.LazyStream.of_channel
     |> Opal.parse Polymer.parse_problem
@@ -95,9 +107,9 @@ let () =
   in
 
   (* Compute part 1 *)
-  let part_1_result = part_1 polymer_template rules in
+  let part_1_result = part_1 pair_counter rules in
   printf "Part 1 %d\n" part_1_result;
 
   (* Compute part 2 *)
-  let part_2_result = part_2 polymer_template rules in
+  let part_2_result = part_2 pair_counter rules in
   printf "Part 2 %d\n" part_2_result
