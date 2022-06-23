@@ -1,0 +1,4 @@
+(executable
+ (name main)
+ (preprocess (pps ppx_deriving.show ppx_let ppx_compare ppx_sexp_conv ppx_hash))
+ (libraries core opal))

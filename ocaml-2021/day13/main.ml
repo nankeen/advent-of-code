@@ -30,6 +30,10 @@ let parse_fold =
 
   token "fold" >> space >> token "along" >> space >> (fold_x <|> fold_y)
 
+let parse_line line =
+  let open Opal in
+  LazyStream.of_string line |> parse (parse_point <|> parse_fold)
+
 (* Utility function to reflect a point *)
 let reflect f (x, y) =
   match f with
@@ -74,10 +78,6 @@ let part_2 points folds =
 
   (* Render the result as a string *)
   render result
-
-let parse_line line =
-  let open Opal in
-  LazyStream.of_string line |> parse (parse_point <|> parse_fold)
 
 let () =
   let input =
