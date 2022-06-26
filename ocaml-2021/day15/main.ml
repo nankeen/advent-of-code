@@ -61,6 +61,26 @@ module Graph = struct
     in
     loop vertex_queue |> ignore;
     dist
+
+  let expand graph n =
+    let increment_row = Array.map ~f:(fun e -> (e % 9) + 1) in
+
+    let expand_row row =
+      let row_sequence =
+        Sequence.unfold ~init:row ~f:(fun r ->
+            let new_r = increment_row r in
+            Some (r, new_r))
+      in
+      Sequence.(take row_sequence n |> to_list) |> Array.concat
+    in
+
+    let g = Array.map ~f:expand_row graph in
+    let seqs =
+      Sequence.unfold ~init:g ~f:(fun g ->
+          let new_g = Array.map ~f:increment_row g in
+          Some (g, new_g))
+    in
+    Sequence.(take seqs n |> to_list) |> Array.concat
 end
 
 let part_1 graph =
@@ -68,7 +88,9 @@ let part_1 graph =
   let dist = Graph.shortest_path graph in
   dist.(m - 1).(n - 1)
 
-let part_2 _ = failwith "Not implemented"
+let part_2 graph =
+  let expanded_graph = Graph.expand graph 5 in
+  part_1 expanded_graph
 
 let parse_row =
   let open Opal in
@@ -91,4 +113,4 @@ let () =
 
   (* Compute part 2 *)
   let part_2_result = part_2 map_grid in
-  printf "Part 2 %s\n" part_2_result
+  printf "Part 2 %d\n" part_2_result
