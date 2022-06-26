@@ -1,0 +1,3 @@
+(executable
+ (name main)
+ (libraries core opal core_kernel.fheap))
