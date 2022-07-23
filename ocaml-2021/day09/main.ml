@@ -55,17 +55,17 @@ let part_1 seafloor =
            let height = get_exn seafloor pos in
            acc + if is_lowpoint pos height then height + 1 else 0))
 
-(* 
- Point module that implements Comparator.S so that
- tuples of integers can be used with Sets
+(*
+   Point module that implements Comparator.S so that
+   tuples of integers can be used with Sets
 *)
 module Point = struct
   module T = struct
-    type t = int * int [@@deriving sexp_of, compare]
+    type t = int * int [@@deriving sexp, compare]
   end
 
   include T
-  include Comparator.Make (T)
+  include Comparable.Make (T)
 end
 
 let flood_fill seafloor pos =
@@ -73,7 +73,7 @@ let flood_fill seafloor pos =
   let open Seafloor in
   (* Create queue and visited set *)
   let q = Queue.create () in
-  let visited = ref @@ Set.empty (module Point) in
+  let visited = ref Point.Set.empty in
 
   (* Mark root as visited and put on queue *)
   visited := Set.add !visited pos;

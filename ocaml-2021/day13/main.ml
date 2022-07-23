@@ -5,10 +5,14 @@ let input_path = (Sys.get_argv ()).(1)
 type parse_result = Point of int * int | FoldX of int | FoldY of int
 
 (* Create a new set type *)
-module Point_set = Set.Make (struct
-  type t = int * int [@@deriving compare, sexp_of]
-  let t_of_sexp = opaque_of_sexp
-end)
+module Point = struct
+  module T = struct
+    type t = int * int [@@deriving compare, sexp]
+  end
+
+  include T
+  include Comparable.Make (T)
+end
 
 (* Parsing functions *)
 let integer =
@@ -44,19 +48,19 @@ let reflect f (x, y) =
 let part_1 points folds =
   (* Perform a single fold *)
   let fold = List.hd_exn folds in
-  Point_set.of_list points
-  |> Point_set.filter_map ~f:(reflect fold)
+  Point.Set.of_list points
+  |> Point.Set.filter_map ~f:(reflect fold)
   |> Set.length
 
 let part_2 points folds =
-  let point_set = Point_set.of_list points in
+  let point_set = Point.Set.of_list points in
 
   (* Perform the folds *)
   let result =
     List.fold ~init:point_set
-      ~f:(fun points fold -> Point_set.filter_map ~f:(reflect fold) points)
+      ~f:(fun points fold -> Point.Set.filter_map ~f:(reflect fold) points)
       folds
-    |> Point_set.to_list
+    |> Set.to_list
   in
 
   (* Create a 2D matrix and mark the points *)
