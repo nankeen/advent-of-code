@@ -22,11 +22,7 @@ module type S = sig
   include Basic.S
 
   val dijkstra_shortest_path_cost :
-    'a t ->
-    from:node ->
-    target:node ->
-    cost:(node * node -> int) ->
-    int option
+    'a t -> from:node -> target:node -> cost:(node * node -> int) -> int option
   (*
   val dijkstra_shortest_path :
     t ->

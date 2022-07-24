@@ -53,7 +53,7 @@ module Make (M : Basic.S) = struct
     in
     loop { queue; distance; previous = M.Node.Map.empty }
 
-    let dijkstra_shortest_path_cost t ~from ~target ~cost = 
-      let { distance ; _ } = dijkstra t ~from ~target ~cost in
-      Map.find distance target
+  let dijkstra_shortest_path_cost t ~from ~target ~cost =
+    let { distance; _ } = dijkstra t ~from ~target ~cost in
+    Map.find distance target
 end
