@@ -1,4 +1,4 @@
 (executable
  (name main)
  (preprocess (pps ppx_sexp_conv ppx_compare))
- (libraries core))
+ (libraries core aoc_utils))

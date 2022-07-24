@@ -24,6 +24,9 @@ module T = struct
   (* Get neighbours of a vertex *)
   let neighbours t (y, x) =
     [ (y, x - 1); (y, x + 1); (y - 1, x); (y + 1, x) ] |> List.filter ~f:(mem t)
+
+  let get t ((y, x) as v) = if mem t v then Some t.(y).(x) else None
+  let get_exn t v = get t v |> Option.value_exn
 end
 
 include T

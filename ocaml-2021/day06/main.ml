@@ -3,7 +3,7 @@ open Core
 let input_path = (Sys.get_argv ()).(1)
 
 let count_fishes fishes =
-  let counter = Hashtbl.create ~size:9 (module Int) in
+  let counter = Int.Table.create ~size:9 () in
   let update_counter fish =
     Hashtbl.incr counter fish
   in

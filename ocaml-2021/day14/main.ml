@@ -54,7 +54,7 @@ module Polymer = struct
 end
 
 let count_polymer polymer =
-  let counter = Hashtbl.create (module Char) in
+  let counter = Char.Table.create () in
   let touch_counter elem n =
     let count =
       match Hashtbl.find counter elem with Some i -> i | None -> 0

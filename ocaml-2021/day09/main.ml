@@ -1,56 +1,23 @@
 open Core
 
 module Seafloor = struct
-  type t = int array array
+  include Aoc_utils.Grid
 
-  let bounds seafloor =
-    let ybounds = Array.length seafloor in
-    let xbounds = Array.length seafloor.(0) in
-    (xbounds, ybounds)
+  let adjacent t pos =
+    neighbours t pos |> List.filter_map ~f:(get t)
 
-  let contains seafloor (x, y) =
-    let xbounds, ybounds = bounds seafloor in
-    x >= 0 && x < xbounds && y >= 0 && y < ybounds
-
-  let get seafloor (x, y) =
-    if contains seafloor (x, y) then Some seafloor.(y).(x) else None
-
-  let get_exn seafloor pos = Option.value_exn (get seafloor pos)
-
-  let neighbour_idxs (x, y) =
-    Sequence.Generator.(
-      run
-        ( yield (x + 1, y) >>= fun () ->
-          yield (x - 1, y) >>= fun () ->
-          yield (x, y + 1) >>= fun () ->
-          yield (x, y - 1) >>= fun () -> return () ))
-
-  let adjacent seafloor pos =
-    neighbour_idxs pos |> Sequence.filter_map ~f:(get seafloor)
-
-  let iteri seafloor =
-    let open Sequence.Generator in
-    let n = Array.length seafloor in
-    let m = Array.length seafloor.(0) in
-    let rec loop (x, y) =
-      if y >= n then return ()
-      else
-        yield (x, y) >>= fun () ->
-        if x >= m - 1 then loop (0, y + 1) else loop (x + 1, y)
-    in
-    loop (0, 0) |> run
 end
 
 let input_path = (Sys.get_argv ()).(1)
 
 let part_1 seafloor =
-  let open Sequence in
+  let open List in
   let is_lowpoint pos height =
     Seafloor.adjacent seafloor pos |> for_all ~f:(( < ) height)
   in
 
   Seafloor.(
-    iteri seafloor
+    nodes seafloor
     |> fold ~init:0 ~f:(fun acc pos ->
            let height = get_exn seafloor pos in
            acc + if is_lowpoint pos height then height + 1 else 0))
@@ -69,7 +36,6 @@ module Point = struct
 end
 
 let flood_fill seafloor pos =
-  let open Sequence in
   let open Seafloor in
   (* Create queue and visited set *)
   let q = Queue.create () in
@@ -89,15 +55,15 @@ let flood_fill seafloor pos =
     let pos = Queue.dequeue_exn q in
     let height = get_exn seafloor pos in
     let eligible =
-      neighbour_idxs pos
-      |> filter ~f:(fun ad_pos -> contains seafloor ad_pos)
-      |> filter ~f:(fun ad_pos ->
+      neighbours seafloor pos
+      |> List.filter ~f:(fun ad_pos -> mem seafloor ad_pos)
+      |> List.filter ~f:(fun ad_pos ->
              let ad_height = get_exn seafloor ad_pos in
              (not (ad_height = 9))
              && ad_height > height
              && not (Set.mem !visited ad_pos))
     in
-    iter
+    List.iter
       ~f:(fun pos ->
         visited := Set.add !visited pos;
         Queue.enqueue q pos)
@@ -106,26 +72,25 @@ let flood_fill seafloor pos =
   !visited
 
 let part_2 seafloor =
-  let open Sequence in
   let open Seafloor in
+  let open List in
   (* 1. Compute all the low points on the seafloor *)
   let is_lowpoint pos =
     let height = get_exn seafloor pos in
     adjacent seafloor pos |> for_all ~f:(Fn.flip ( > ) height)
   in
 
-  let low_points = iteri seafloor |> filter ~f:is_lowpoint in
+  let low_points = nodes seafloor |> filter ~f:is_lowpoint in
 
   (* 2. Find basins by floodfill from low point *)
   let basins =
     map low_points ~f:(fun p -> flood_fill seafloor p |> Set.length)
     |> filter ~f:(( < ) 0)
-    |> to_array
+    |> sort ~compare:Int.descending
   in
 
   (* 3. Take top 3 basin by size *)
-  Array.sort basins ~compare:(fun a b -> Int.compare b a);
-  take (basins |> Array.to_sequence) 3 |> fold ~init:1 ~f:( * )
+  take basins 3 |> fold ~init:1 ~f:( * )
 
 let parse_line line = String.to_array line |> Array.map ~f:Char.get_digit_exn
 

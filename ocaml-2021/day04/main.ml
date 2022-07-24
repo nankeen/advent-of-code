@@ -20,10 +20,7 @@ let mark_board x { rows } =
   { rows = List.map ~f:mark_row rows }
 
 let board_score { rows } =
-  List.sum
-    (module Int)
-    rows
-    ~f:(List.sum (module Int) ~f:(function Unmarked e -> e | _ -> 0))
+  List.concat rows |> List.sum (module Int) ~f:(function Unmarked e -> e | _ -> 0)
 
 let input_path = (Sys.get_argv ()).(1)
 

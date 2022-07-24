@@ -76,7 +76,7 @@ let part_2 lines =
         (eight, 8);
         (nine, 9);
       ]
-    |> Map.of_alist_exn (module String)
+    |> String.Map.of_alist_exn
   in
   let output_line (signals, digits) =
     let signals_map = map_signals signals in
