@@ -3,13 +3,9 @@ open Core
 let input_path = (Sys.get_argv ()).(1)
 
 module Grid = struct
-  type t = int array array [@@deriving show]
+  include Aoc_utils.Grid
 
-  let contains board (x, y) =
-    let n, m = Array.(length board, length board.(0)) in
-    x < m && x >= 0 && y >= 0 && y < n
-
-  let get_neighbourhood_idxs board (x, y) =
+  let neighbours t (x, y) =
     [
       (x + 1, y + 1);
       (x + 1, y - 1);
@@ -20,54 +16,35 @@ module Grid = struct
       (x - 1, y);
       (x + 1, y);
     ]
-    |> List.filter ~f:(contains board)
+    |> List.filter ~f:(mem t)
 
-  let get board (x, y) =
-    if contains board (x, y) then Some board.(y).(x) else None
-
-  let get_exn board (x, y) = board.(y).(x)
-
-  let get_neighbourhood board pos =
-    get_neighbourhood_idxs board pos |> List.filter_map ~f:(get board)
-
-  let iteri board =
-    let open Sequence.Generator in
-    let n, m = Array.(length board, length board.(0)) in
-    let rec loop (x, y) =
-      if y >= n then return ()
-      else
-        yield (x, y) >>= fun () ->
-        if x < m - 1 then loop (x + 1, y) else loop (0, y + 1)
-    in
-    loop (0, 0) |> run
-
-  let rec advance_point board p =
+  let rec advance_point t p =
     let x, y = p in
-    let life = board.(y).(x) in
-    board.(y).(x) <- life + 1;
-    flash board p (life + 1)
+    let life = t.(y).(x) in
+    t.(y).(x) <- life + 1;
+    flash t p (life + 1)
 
   and flash board p life =
     if life = 10 then
       (* Update board *)
       ignore
-        (get_neighbourhood_idxs board p |> List.map ~f:(advance_point board)
+        (neighbours board p |> List.map ~f:(advance_point board)
           : 'a list)
 
-  let advance_all board =
+  let advance_all t =
     (* Advance and flash *)
-    iteri board |> Sequence.fold ~init:() ~f:(fun _ p -> advance_point board p)
+    nodes t |> List.fold ~init:() ~f:(fun _ p -> advance_point t p)
 
-  let reset_flashed board =
+  let reset_flashed t =
     let reset_point flashed p =
       let x, y = p in
-      if board.(y).(x) > 9 then (
-        board.(y).(x) <- 0;
+      if t.(y).(x) > 9 then (
+        t.(y).(x) <- 0;
         flashed + 1)
       else flashed
     in
 
-    iteri board |> Sequence.fold ~init:0 ~f:reset_point
+    nodes t |> List.fold ~init:0 ~f:reset_point
 end
 
 let part_1 board =
