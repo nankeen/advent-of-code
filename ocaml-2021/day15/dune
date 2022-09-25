@@ -1,3 +1,4 @@
 (executable
  (name main)
+ (preprocess (pps ppx_jane))
  (libraries core opal core_kernel.fheap aoc_utils))
