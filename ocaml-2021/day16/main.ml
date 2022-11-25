@@ -133,9 +133,11 @@ module Packet = struct
         match header.type_id with
         | Sum -> List.sum (module Int) ~f:Fn.id values
         | Product -> List.fold ~init:1 ~f:( * ) values
-        | Minimum -> List.min_elt ~compare:Int.compare values |> Option.value_exn
-        | Maximum -> List.max_elt ~compare:Int.compare values |> Option.value_exn
-        | Greater_than -> 
+        | Minimum ->
+            List.min_elt ~compare:Int.compare values |> Option.value_exn
+        | Maximum ->
+            List.max_elt ~compare:Int.compare values |> Option.value_exn
+        | Greater_than ->
             let fst = List.hd_exn values and snd = List.nth_exn values 1 in
             if fst > snd then 1 else 0
         | Less_than ->
