@@ -32,25 +32,26 @@ let part_1 graph =
   Graph.dijkstra_shortest_path_cost graph ~from
     ~target:(m - 1, n - 1)
     ~cost:(fun (_, (vy, vx)) -> graph.(vy).(vx))
-    |> Option.value_exn
+  |> Option.value_exn
 
 let part_2 graph =
   let expanded_graph = Graph.expand graph 5 in
   part_1 expanded_graph
 
 let parse_row =
-  let open Opal in
-  many1 (digit => Char.to_string => int_of_string) => List.to_array
+  let open Angstrom in
+  let digit = satisfy Char.is_digit in
+  many1 (digit >>| Char.to_string >>| int_of_string) >>| List.to_array
 
 let parse_problem =
-  let open Opal in
-  many1 (parse_row << newline) => List.to_array
+  let open Angstrom in
+  many1 (parse_row <* char '\n') >>| List.to_array
 
 let () =
   let map_grid =
-    In_channel.create input_path
-    |> Opal.LazyStream.of_channel |> Opal.parse parse_problem
-    |> Option.value_exn
+    In_channel.read_all input_path
+    |> Angstrom.parse_string ~consume:Prefix parse_problem
+    |> Result.ok_or_failwith
   in
 
   (* Compute part 1 *)
