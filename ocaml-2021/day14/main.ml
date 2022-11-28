@@ -1,5 +1,8 @@
 open Core
 
+let space = Angstrom.char ' '
+let upper = Angstrom.satisfy Char.is_uppercase
+
 module Polymer = struct
   type t = (char * char, int) Hashtbl.t
   type rule = (char * char) * char
@@ -13,14 +16,12 @@ module Polymer = struct
     include Hashable.Make (T)
   end
 
-  let ( let* ) = Opal.( >>= )
-
   let parse_rule =
-    let open Opal in
+    let open Angstrom in
     let* left1 = upper in
     let* left2 = upper in
 
-    let* produces = space >> token "->" << space >> upper << newline in
+    let* produces = space *> string "->" *> space *> upper <* end_of_line in
     return ((left1, left2), produces)
 
   let touch_n t s n =
@@ -35,9 +36,9 @@ module Polymer = struct
     counter
 
   let parse_problem =
-    let open Opal in
+    let open Angstrom in
     let* polymer_template = many1 upper in
-    let* _ = many newline in
+    let* _ = many end_of_line in
     let* rules = many parse_rule in
     return (count_pairs polymer_template, Pair.Table.of_alist_exn rules)
 
@@ -105,10 +106,9 @@ let part_2 polymer rules =
 
 let () =
   let pair_counter, rules =
-    In_channel.create input_path
-    |> Opal.LazyStream.of_channel
-    |> Opal.parse Polymer.parse_problem
-    |> Option.value_exn
+    In_channel.read_all input_path
+    |> Angstrom.parse_string ~consume:Prefix Polymer.parse_problem
+    |> Result.ok_or_failwith
   in
 
   (* Compute part 1 *)
