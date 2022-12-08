@@ -86,7 +86,6 @@ fn solve_2(stacks: &[Stack], moves: &[Move]) -> String {
 fn main() -> Result<()> {
     let input = read_to_string(args().nth(1).with_context(|| "Invalid arguments")?)?;
     let (_, (stacks, moves)) = parse_problem(&input).map_err(|c| {
-        dbg!(c);
         anyhow!("Failed to parse")
     })?;
 
