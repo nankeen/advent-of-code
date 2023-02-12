@@ -1,0 +1,5 @@
+(library
+ (name aoc2021_day18)
+ (inline_tests)
+ (preprocess (pps ppx_jane ppx_expect))
+ (libraries core angstrom))
