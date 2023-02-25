@@ -1,3 +1,4 @@
 (executable
  (name main)
- (libraries core))
+ (preprocess (pps ppx_jane))
+ (libraries core angstrom aoc2021_template))
